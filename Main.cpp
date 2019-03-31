@@ -20,6 +20,22 @@ using namespace std;
 //	CLASSES, TYPEDEFS AND STRUCTURES
 //
 //****************************************************************************************
+class	Result
+{
+	public:
+		void	Fail();
+
+		void	Pass(uint64_t score);
+
+		void	SetMaximum(uint64_t maximum);
+	
+		void	Show();
+		
+	private:
+		uint64_t	maximum_;
+
+		uint64_t	total_;
+};
 
 //****************************************************************************************
 //
@@ -53,15 +69,15 @@ void	ShowAuthorizations(ostream& stream, AuthorizationVector& authorizationVecto
 
 void	ShowTransactions(ostream& stream, TransactionVector& transactionVector);
 
-uint64_t	TestAccess();
+void	TestAccess(Result& result);
 
-uint64_t	TestAdd();
+void	TestAdd(Result& result);
 
-uint64_t	TestCard();
+void	TestCard(Result& result);
 
-uint64_t	TestChange();
+void	TestChange(Result& result);
 
-uint64_t	TestDelete();
+void	TestDelete(Result& result);
 
 //****************************************************************************************
 //
@@ -72,25 +88,24 @@ int main (int argc, char * const argv[])
 {
 	//************************************************************************************
 	//	LOCAL DATA
-	uint64_t			score;
-	
-	TransactionVector	transactionVector;
+	Result	result;
 	
 	//************************************************************************************
 	//	EXECUTABLE STATEMENTS
-	score = 0;
+	result.SetMaximum(80);
 	
-	score += TestAdd();
+	TestAdd(result);
 	
-	score += TestDelete();
+	TestDelete(result);
 	
-	score += TestChange();
+	TestChange(result);
 	
-	score += TestAccess();
+	TestAccess(result);
 	
-	score += TestCard();
+	TestCard(result);
 	
-	cout << endl << "Total score: " << score << "/80" << endl;
+	cout << endl << "Final result: ";
+	result.Show();
 	
 	cout << endl << "** Finished **" << endl;
 
@@ -195,8 +210,7 @@ bool	CompareTransactions(TransactionVector& actualVector,
 		stream << "Expected:"<< endl;
 		ShowTransactions(stream, expectedVector);
 	}
-	
-	
+
 	return(good);
 }
 
@@ -272,7 +286,7 @@ void	ShowTransactions(ostream& stream, TransactionVector& transactionVector)
 //	TestAccess
 //
 //****************************************************************************************
-uint64_t	TestAccess()
+void	TestAccess(Result& result)
 {
 	//************************************************************************************
 	//	LOCAL DATA
@@ -284,19 +298,17 @@ uint64_t	TestAccess()
 	
 	bool				good;
 	
-	uint64_t			score;
-	
 	bool				success;
 	
 	//************************************************************************************
 	//	EXECUTABLE STATEMENTS
 	cout << "Testing Access" << endl;
-	score = 0;
 	
 	success = gateControl.AddAuthorization(111, "Smith, John", "0800", "1700");
 	success = gateControl.AddAuthorization(222, "Brown, William", "0100", "2300");
 	success = gateControl.AddAuthorization(333, "Jones, Peter", "0333", "2333");
 	
+	cout << "  Allowed 1 (6 points) ";
 	gCurrentDate = "01022019";
 	gCurrentTime = "0100";
 	success = gateControl.AccessAllowed(222);
@@ -304,15 +316,17 @@ uint64_t	TestAccess()
 	expectedVector.push_back(Transaction(222, "Brown, William", "01022019", "0100", true));
 	gateControl.GetAllTransactions(actualVector);
 	good = CompareTransactions(actualVector, expectedVector, cout);
+
 	if (good)
 	{
-		score += 5;
+		result.Pass(6);
 	}
 	else
 	{
-		cout << "Transaction log not as expected." << endl;
+		result.Fail();
 	}
 	
+	cout << "  Allowed 2 (5 points) ";
 	gCurrentDate = "01022019";
 	gCurrentTime = "2300";
 	success = gateControl.AccessAllowed(222);
@@ -322,13 +336,14 @@ uint64_t	TestAccess()
 	good = CompareTransactions(actualVector, expectedVector, cout);
 	if (good)
 	{
-		score += 5;
+		result.Pass(5);
 	}
 	else
 	{
-		cout << "Transaction log not as expected." << endl;
+		result.Fail();
 	}
 	
+	cout << "  Denied 1 (6 points) ";
 	gCurrentDate = "01022019";
 	gCurrentTime = "0059";
 	success = gateControl.AccessAllowed(222);
@@ -338,13 +353,14 @@ uint64_t	TestAccess()
 	good = CompareTransactions(actualVector, expectedVector, cout);
 	if (good)
 	{
-		score += 5;
+		result.Pass(6);
 	}
 	else
 	{
-		cout << "Transaction log not as expected." << endl;
+		result.Fail();
 	}
 	
+	cout << "  Denied 2 (5 points) ";
 	gCurrentDate = "01022019";
 	gCurrentTime = "2312";
 	success = gateControl.AccessAllowed(444);
@@ -354,16 +370,14 @@ uint64_t	TestAccess()
 	good = CompareTransactions(actualVector, expectedVector, cout);
 	if (good)
 	{
-		score += 5;
+		result.Pass(5);
 	}
 	else
 	{
-		cout << "Transaction log not as expected." << endl;
+		result.Fail();
 	}
 	
-	cout << "  Score: " << score << endl;
-	
-	return(score);
+	return;
 }
 
 //****************************************************************************************
@@ -371,7 +385,7 @@ uint64_t	TestAccess()
 //	TestAdd
 //
 //****************************************************************************************
-uint64_t	TestAdd()
+void	TestAdd(Result& result)
 {
 	//************************************************************************************
 	//	LOCAL DATA
@@ -383,21 +397,24 @@ uint64_t	TestAdd()
 	
 	bool				good;
 	
-	uint64_t			score;
-	
 	bool				success;
 	
 	//************************************************************************************
 	//	EXECUTABLE STATEMENTS
 	cout << "Testing AddAuthorization" << endl;
-	score = 0;
 	
+	cout << "  Check Empty (5 points) ";
 	gateControl.GetAllAuthorizations(actualVector);
 	if (actualVector.empty())
 	{
-		score += 5;
+		result.Pass(5);
 	}
-	
+	else
+	{
+		result.Fail();
+	}
+
+	cout << "  Add First (6 points) ";
 	expectedVector.push_back(Authorization(111, "Smith, John", "0800", "1700"));
 	success = gateControl.AddAuthorization(111, "Smith, John", "0800", "1700");
 	if (success)
@@ -406,18 +423,19 @@ uint64_t	TestAdd()
 		good = CompareAuthorizations(actualVector, expectedVector, cout);
 		if (good)
 		{
-			score += 5;
+			result.Pass(6);
 		}
 		else
 		{
-			cout << "Failed to add authorization for card 111." << endl;
+			result.Fail();
 		}
 	}
 	else
 	{
-		cout << "Failed to add authorization for card 111." << endl;
+		result.Fail();
 	}
 
+	cout << "  Add Second (5 points) ";
 	expectedVector.push_back(Authorization(222, "Brown, William", "0100", "2300"));
 	success = gateControl.AddAuthorization(222, "Brown, William", "0100", "2300");
 	if (success)
@@ -426,31 +444,30 @@ uint64_t	TestAdd()
 		good = CompareAuthorizations(actualVector, expectedVector, cout);
 		if (good)
 		{
-			score += 5;
+			result.Pass(5);
 		}
 		else
 		{
-			cout << "Failed to add authorization for card 222." << endl;
+			result.Fail();
 		}
 	}
 	else
 	{
-		cout << "Failed to add authorization for card 222." << endl;
+		result.Fail();
 	}
 	
+	cout << "  Add Duplicate (6 points) ";
 	success = gateControl.AddAuthorization(111, "Jones, Peter", "0800", "1700");
 	if (!success)
 	{
-		score += 5;
+		result.Pass(6);
 	}
 	else
 	{
-		cout << "Succeeded in adding authorization for card 111; should have failed, it's a duplicate." << endl;
+		result.Fail();
 	}
 	
-	cout << "  Score: " << score << endl;
-	
-	return(score);
+	return;
 }
 
 //****************************************************************************************
@@ -458,7 +475,7 @@ uint64_t	TestAdd()
 //	TestCard
 //
 //****************************************************************************************
-uint64_t	TestCard()
+void	TestCard(Result& result)
 {
 	//************************************************************************************
 	//	LOCAL DATA
@@ -472,29 +489,32 @@ uint64_t	TestCard()
 	
 	bool				good;
 	
-	uint64_t			score;
-	
 	bool				success;
 	
 	//************************************************************************************
 	//	EXECUTABLE STATEMENTS
 	cout << "Testing Card-Specific Functions" << endl;
-	score = 0;
 	
 	success = gateControl.AddAuthorization(111, "Smith, John", "0800", "1700");
 	success = gateControl.AddAuthorization(222, "Brown, William", "0100", "2300");
 	success = gateControl.AddAuthorization(333, "Jones, Peter", "0333", "2333");
 	
+	cout << "  GetCardAuthorization (6 points) ";
 	success = gateControl.GetCardAuthorization(222, authorization);
-	if ((authorization.name_ == "two")
+	if ((authorization.name_ == "Brown, William")
 		&&
 		(authorization.startTime_ == "0100")
 		&&
 		(authorization.endTime_ == "2300"))
 	{
-		score += 5;
+		result.Pass(6);
+	}
+	else
+	{
+		result.Fail();
 	}
 
+	cout << "  GetCardTransactions (6 points) ";
 	gCurrentDate = "01022019";
 	gCurrentTime = "0900";
 	success = gateControl.AccessAllowed(111);
@@ -515,16 +535,14 @@ uint64_t	TestCard()
 	good = CompareTransactions(actualVector, expectedVector, cout);
 	if (good)
 	{
-		score += 5;
+		result.Pass(6);
 	}
 	else
 	{
-		cout << "Transaction log not as expected." << endl;
+		result.Fail();
 	}
 	
-	cout << "  Score: " << score << endl;
-	
-	return(score);
+	return;
 }
 
 //****************************************************************************************
@@ -532,7 +550,7 @@ uint64_t	TestCard()
 //	TestChange
 //
 //****************************************************************************************
-uint64_t	TestChange()
+void	TestChange(Result& result)
 {
 	//************************************************************************************
 	//	LOCAL DATA
@@ -544,49 +562,46 @@ uint64_t	TestChange()
 	
 	bool				good;
 	
-	uint64_t			score;
-	
 	bool				success;
 	
 	//************************************************************************************
 	//	EXECUTABLE STATEMENTS
 	cout << "Testing ChangeAuthorization" << endl;
-	score = 0;
 	
 	success = gateControl.AddAuthorization(111, "Smith, John", "0800", "1700");
 	success = gateControl.AddAuthorization(222, "Brown, William", "0100", "2300");
 	success = gateControl.AddAuthorization(333, "Jones, Peter", "0333", "2333");
 	
-	success = gateControl.ChangeAuthorization(222, "twochanged", "1234", "1356");
+	cout << "  Existing Card (6 points) ";
+	success = gateControl.ChangeAuthorization(222, "Brown, Bill", "1234", "1356");
 	
 	expectedVector.push_back(Authorization(111, "Smith, John", "0800", "1700"));
-	expectedVector.push_back(Authorization(222, "Brown, William", "1234", "1356"));
+	expectedVector.push_back(Authorization(222, "Brown, Bill", "1234", "1356"));
 	expectedVector.push_back(Authorization(333, "Jones, Peter", "0333", "2333"));
 	
 	gateControl.GetAllAuthorizations(actualVector);
 	good = CompareAuthorizations(actualVector, expectedVector, cout);
 	if (good)
 	{
-		score += 5;
+		result.Pass(6);
 	}
 	else
 	{
-		cout << "Failed to change authorization for card 222." << endl;
+		result.Fail();
 	}
 	
+	cout << "  Non-existent Card (6 points) ";
 	success = gateControl.ChangeAuthorization(444, "", "", "");
 	if (!success)
 	{
-		score += 5;
+		result.Pass(6);
 	}
 	else
 	{
-		cout << "Succeeded in changing authorization for card 444; should have failed." << endl;
+		result.Fail();
 	}
 	
-	cout << "  Score: " << score << endl;
-	
-	return(score);
+	return;
 }
 
 //****************************************************************************************
@@ -594,7 +609,7 @@ uint64_t	TestChange()
 //	TestDelete
 //
 //****************************************************************************************
-uint64_t	TestDelete()
+void	TestDelete(Result& result)
 {
 	//************************************************************************************
 	//	LOCAL DATA
@@ -606,19 +621,17 @@ uint64_t	TestDelete()
 	
 	bool				good;
 	
-	uint64_t			score;
-	
 	bool				success;
 	
 	//************************************************************************************
 	//	EXECUTABLE STATEMENTS
 	cout << "Testing DeleteAuthorization" << endl;
-	score = 0;
 	
 	success = gateControl.AddAuthorization(111, "Smith, John", "0800", "1700");
 	success = gateControl.AddAuthorization(222, "Brown, William", "0100", "2300");
 	success = gateControl.AddAuthorization(333, "Jones, Peter", "0333", "2333");
 	
+	cout << "  Existing Card (6 points) ";
 	success = gateControl.DeleteAuthorization(222);
 
 	expectedVector.push_back(Authorization(111, "Smith, John", "0800", "1700"));
@@ -628,26 +641,98 @@ uint64_t	TestDelete()
 	good = CompareAuthorizations(actualVector, expectedVector, cout);
 	if (good)
 	{
-		score += 5;
+		result.Pass(6);
 	}
 	else
 	{
-		cout << "Failed to delete authorization for card 222." << endl;
+		result.Fail();
 	}
 
+	cout << "  Non-existent Card (6 points) ";
 	success = gateControl.DeleteAuthorization(444);
 	if (!success)
 	{
-		score += 5;
+		result.Pass(6);
 	}
 	else
 	{
-		cout << "Succeeded in deleting authorization for card 444; should have failed." << endl;
+		result.Fail();
 	}
 
-	cout << "  Score: " << score << endl;
+	return;
+}
 
-	return(score);
+//****************************************************************************************
+//
+//	Result::Fail
+//
+//****************************************************************************************
+void	Result::Fail()
+{
+	//************************************************************************************
+	//	LOCAL DATA
+	
+	//************************************************************************************
+	//	EXECUTABLE STATEMENTS
+	cout << "Fail. ";
+	
+	Show();
+	
+	return;
+}
+
+//****************************************************************************************
+//
+//	Result::Pass
+//
+//****************************************************************************************
+void	Result::Pass(uint64_t score)
+{
+	//************************************************************************************
+	//	LOCAL DATA
+	
+	//************************************************************************************
+	//	EXECUTABLE STATEMENTS
+	cout << "Pass. ";
+	total_ += score;
+	
+	Show();
+	
+	return;
+}
+
+//****************************************************************************************
+//
+//	Result::SetMaximum
+//
+//****************************************************************************************
+void	Result::SetMaximum(uint64_t maximum)
+{
+	//************************************************************************************
+	//	LOCAL DATA
+	
+	//************************************************************************************
+	//	EXECUTABLE STATEMENTS
+	maximum_ = maximum;
+	
+	return;
+}
+
+//****************************************************************************************
+//
+//	Result::Show
+//
+//****************************************************************************************
+void	Result::Show()
+{
+	//************************************************************************************
+	//	LOCAL DATA
+	
+	//************************************************************************************
+	//	EXECUTABLE STATEMENTS
+	cout << total_ << "/" << maximum_ << " points" << endl;
+	
+	return;
 }
 
 #if 0
