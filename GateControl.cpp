@@ -30,9 +30,23 @@ extern	string	gCurrentTime;
 //****************************************************************************************
 //	GateControl::AccessAllowed
 //****************************************************************************************
-bool	GateControl::AccessAllowed(CardNumber number)
-{
-	return true;
+bool	GateControl::AccessAllowed(CardNumber number) {
+	AuthorizationIterator temp;
+	temp = authorizationMap_.find(number);
+
+	if (temp == authorizationMap_.end()){
+		Transaction t1(number, "***", gCurrentDate, gCurrentTime, false);
+		transactionVector_.push_back(t1);
+		return false;
+	}
+	else {
+		bool passed = false;
+		if ((temp->second.startTime_ >= gCurrentTime) && (temp->second.endTime_ <= gCurrentTime))
+			passed = true;
+		Transaction t2(number, temp->second.name_ , gCurrentDate, gCurrentTime, passed);
+		transactionVector_.push_back(t2);
+		return true;
+	}
 }
 //****************************************************************************************
 //	GateControl::AddAuthorization
@@ -59,8 +73,12 @@ bool	GateControl::ChangeAuthorization(CardNumber number, const string& name,
 	temp = authorizationMap_.find(number);
 	if (temp == authorizationMap_.end())
 		return false;
-  else
+  else {
+		temp->second.name_ = name;
+		temp->second.startTime_ = startTime;
+		temp->second.endTime_ = endTime;
 		return true;
+	}
 }
 //****************************************************************************************
 //	GateControl::DeleteAuthorization
@@ -93,7 +111,10 @@ void	GateControl::GetAllAuthorizations(AuthorizationVector& authorizationVector)
 //	GateControl::GetAllTransactions
 //****************************************************************************************
 void	GateControl::GetAllTransactions(TransactionVector& transactionVector) {
-	//return false;
+	if (transactionVector_.empty())
+		transactionVector.clear();
+	else
+		transactionVector.assign(transactionVector_.begin(), transactionVector_.end());
 }
 //****************************************************************************************
 //	GateControl::GetCardAuthorization
@@ -103,14 +124,25 @@ bool	GateControl::GetCardAuthorization(CardNumber number, Authorization& authori
 		temp = authorizationMap_.find(number);
 		if (temp == authorizationMap_.end())
 			return false;
-		else
+		else {
 			authorization = authorizationMap_.at(number);
 			return true;
+		}
 }
 //****************************************************************************************
 //	GateControl::GetCardTransactions
 //****************************************************************************************
 bool	GateControl::GetCardTransactions(CardNumber number,
 										 TransactionVector& transactionVector) {
-	return false;
+	TransactionVector::iterator it = transactionVector_.begin();
+	if (transactionVector_.empty()){
+		transactionVector.clear();
+		return false;
+	}
+	else
+		for (; it < transactionVector_.end(); ++it) {
+			if (it->number_ == number)
+				transactionVector.push_back(*it);
+		}
+		return true;
 }
