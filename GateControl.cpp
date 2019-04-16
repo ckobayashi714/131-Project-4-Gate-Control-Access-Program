@@ -29,6 +29,8 @@ extern	string	gCurrentTime;
 
 //****************************************************************************************
 //	GateControl::AccessAllowed
+//  This function will validate access to a card's number. If access is allowed or denied
+//  the attempt will be logged.
 //****************************************************************************************
 bool	GateControl::AccessAllowed(CardNumber number) {
 	AuthorizationIterator temp;
@@ -50,6 +52,8 @@ bool	GateControl::AccessAllowed(CardNumber number) {
 }
 //****************************************************************************************
 //	GateControl::AddAuthorization
+//  This function will check to see if a card number is already listed, if not
+//  the new card number will be added to list.
 //****************************************************************************************
 bool	GateControl::AddAuthorization(CardNumber number, const string& name,
 									  const string& startTime, const string& endTime) {
@@ -65,10 +69,12 @@ bool	GateControl::AddAuthorization(CardNumber number, const string& name,
 }
 //****************************************************************************************
 //	GateControl::ChangeAuthorization
+//  This function will search for a card number, when it finds it will update the user's
+//  name, start time, and end time.
+//  If no card is found, nothing gets updated.
 //****************************************************************************************
 bool	GateControl::ChangeAuthorization(CardNumber number, const string& name,
-										 const string& startTime, const string& endTime)
-{
+										 const string& startTime, const string& endTime) {
 	AuthorizationIterator temp;
 	temp = authorizationMap_.find(number);
 	if (temp == authorizationMap_.end())
@@ -82,6 +88,8 @@ bool	GateControl::ChangeAuthorization(CardNumber number, const string& name,
 }
 //****************************************************************************************
 //	GateControl::DeleteAuthorization
+//  This function will search for a card number, when it finds it will delete the card number (all access)
+//  If no card number is found, nothing gets deleted.
 //****************************************************************************************
 bool	GateControl::DeleteAuthorization(CardNumber number) {
 	AuthorizationIterator temp;
@@ -96,6 +104,8 @@ bool	GateControl::DeleteAuthorization(CardNumber number) {
 }
 //****************************************************************************************
 //	GateControl::GetAllAuthorizations
+//  
+
 //****************************************************************************************
 void	GateControl::GetAllAuthorizations(AuthorizationVector& authorizationVector) {
 	AuthorizationIterator	iterator;
@@ -139,10 +149,11 @@ bool	GateControl::GetCardTransactions(CardNumber number,
 		transactionVector.clear();
 		return false;
 	}
-	else
+	else{
 		for (; it < transactionVector_.end(); ++it) {
 			if (it->number_ == number)
 				transactionVector.push_back(*it);
 		}
 		return true;
+	}
 }
