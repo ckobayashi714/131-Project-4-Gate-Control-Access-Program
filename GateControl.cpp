@@ -4,7 +4,6 @@
 #include <iostream>
 #include "GateControl.hpp"
 using namespace std;
-
 //****************************************************************************************
 //	CONSTANT DEFINITIONS
 //****************************************************************************************
@@ -29,9 +28,10 @@ extern	string	gCurrentTime;
 
 //****************************************************************************************
 //	GateControl::AccessAllowed
-//  This function will validate access to a card's number. If access is allowed or denied
-//  the attempt will be logged.
+//  This function will validate access to a card's number. The attempt will be logged
+//  regarless if access is allowed or denied.
 //****************************************************************************************
+
 bool	GateControl::AccessAllowed(CardNumber number) {
 	AuthorizationIterator temp;
 	temp = authorizationMap_.find(number);
@@ -41,20 +41,20 @@ bool	GateControl::AccessAllowed(CardNumber number) {
 		transactionVector_.push_back(t1);
 		return false;
 	}
-	else {
-		bool passed = false;
-		if ((temp->second.startTime_ >= gCurrentTime) && (temp->second.endTime_ <= gCurrentTime))
-			passed = true;
-		Transaction t2(number, temp->second.name_ , gCurrentDate, gCurrentTime, passed);
-		transactionVector_.push_back(t2);
-		return true;
-	}
+	bool passed = false;
+	if ((temp->second.startTime_ >= gCurrentTime) && (temp->second.endTime_ <= gCurrentTime))
+		passed = true;
+	Transaction t2(number, temp->second.name_ , gCurrentDate, gCurrentTime, passed);
+	transactionVector_.push_back(t2);
+	return true;
 }
+
 //****************************************************************************************
 //	GateControl::AddAuthorization
-//  This function will check to see if a card number is already listed, if not
-//  the new card number will be added to list.
+//  This function will check to see if a card number already exists, if not the
+//  new card number will be added to list.
 //****************************************************************************************
+
 bool	GateControl::AddAuthorization(CardNumber number, const string& name,
 									  const string& startTime, const string& endTime) {
 	Authorization a1(number, name, startTime, endTime);
@@ -64,84 +64,95 @@ bool	GateControl::AddAuthorization(CardNumber number, const string& name,
 		authorizationMap_.emplace(number, a1);
 		return true;
 	}
-	else
-		return false;
+	return false;
 }
+
 //****************************************************************************************
 //	GateControl::ChangeAuthorization
-//  This function will search for a card number, when it finds it will update the user's
-//  name, start time, and end time.
-//  If no card is found, nothing gets updated.
+//  This function will search for a card number, when it finds it, it will update the user's
+//  name, start time, and end time. If no card number is found, nothing gets updated.
 //****************************************************************************************
+
 bool	GateControl::ChangeAuthorization(CardNumber number, const string& name,
 										 const string& startTime, const string& endTime) {
 	AuthorizationIterator temp;
 	temp = authorizationMap_.find(number);
 	if (temp == authorizationMap_.end())
 		return false;
-  else {
-		temp->second.name_ = name;
-		temp->second.startTime_ = startTime;
-		temp->second.endTime_ = endTime;
-		return true;
-	}
+	temp->second.name_ = name;
+	temp->second.startTime_ = startTime;
+	temp->second.endTime_ = endTime;
+	return true;
 }
+
 //****************************************************************************************
 //	GateControl::DeleteAuthorization
-//  This function will search for a card number, when it finds it will delete the card number (all access)
-//  If no card number is found, nothing gets deleted.
+//  This function will search for a card number, when it finds it, it will delete the card
+//  number and the authorizations attached to it. If no card number is found, nothing gets
+//  deleted.
 //****************************************************************************************
+
 bool	GateControl::DeleteAuthorization(CardNumber number) {
 	AuthorizationIterator temp;
 	temp = authorizationMap_.find(number);
-	if (temp == authorizationMap_.end()) {
+	if (temp == authorizationMap_.end())
 		return false;
-	}
-	else {
-		authorizationMap_.erase(temp);
-		return true;
-	}
+	authorizationMap_.erase(temp);
+	return true;
 }
-//****************************************************************************************
-//	GateControl::GetAllAuthorizations
-//  
 
 //****************************************************************************************
+//	GateControl::GetAllAuthorizations
+//  This function will receive all the authorization records. It will traverse the
+// 	authorization map and copy each element into the vector.
+//****************************************************************************************
+
 void	GateControl::GetAllAuthorizations(AuthorizationVector& authorizationVector) {
 	AuthorizationIterator	iterator;
 	iterator = authorizationMap_.begin();
 	authorizationVector.clear();
 	if (authorizationMap_.empty())
 		return;
-	for (; iterator != authorizationMap_.end(); ++iterator){
+	for (; iterator != authorizationMap_.end(); ++iterator)
 		authorizationVector.push_back(iterator->second);
-	}
 }
+
 //****************************************************************************************
 //	GateControl::GetAllTransactions
+//  This function will receive the complete set of the transaction records. It will first
+//  check to see if the transaction vector is empty, if so the vector will be cleared.
+//  If not, it will assign the contents to the vector.
 //****************************************************************************************
+
 void	GateControl::GetAllTransactions(TransactionVector& transactionVector) {
 	if (transactionVector_.empty())
 		transactionVector.clear();
 	else
 		transactionVector.assign(transactionVector_.begin(), transactionVector_.end());
 }
+
 //****************************************************************************************
 //	GateControl::GetCardAuthorization
+//  This function will search for a card number's authorization. If no card number is
+//  found, nothing will get stored.
 //****************************************************************************************
+
 bool	GateControl::GetCardAuthorization(CardNumber number, Authorization& authorization) {
 		AuthorizationIterator temp;
 		temp = authorizationMap_.find(number);
 		if (temp == authorizationMap_.end())
 			return false;
-		else {
-			authorization = authorizationMap_.at(number);
-			return true;
-		}
+		authorization = authorizationMap_[number];
+		return true;
 }
+
 //****************************************************************************************
 //	GateControl::GetCardTransactions
+//  This function will receive the transaction records for the specified card number.
+//  It will search the vector and store the transaction each time the card number is found.
+//  If the vector is empty, it will clear the vector.
 //****************************************************************************************
+
 bool	GateControl::GetCardTransactions(CardNumber number,
 										 TransactionVector& transactionVector) {
 	TransactionVector::iterator it = transactionVector_.begin();
@@ -149,11 +160,9 @@ bool	GateControl::GetCardTransactions(CardNumber number,
 		transactionVector.clear();
 		return false;
 	}
-	else{
-		for (; it < transactionVector_.end(); ++it) {
-			if (it->number_ == number)
-				transactionVector.push_back(*it);
-		}
-		return true;
+	for (; it < transactionVector_.end(); ++it) {
+		if (it->number_ == number)
+			transactionVector.push_back(*it);
 	}
+	return true;
 }
