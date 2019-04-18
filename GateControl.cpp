@@ -134,7 +134,7 @@ void	GateControl::GetAllTransactions(TransactionVector& transactionVector) {
 //****************************************************************************************
 //	GateControl::GetCardAuthorization
 //  This function will search for a card number's authorization. If no card number is
-//  found, nothing will get stored.
+//  found, then no authorization exists.
 //****************************************************************************************
 
 bool	GateControl::GetCardAuthorization(CardNumber number, Authorization& authorization) {
