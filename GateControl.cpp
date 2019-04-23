@@ -88,7 +88,7 @@ bool	GateControl::ChangeAuthorization(CardNumber number, const string& name,
 //****************************************************************************************
 //	GateControl::DeleteAuthorization
 //  This function will search for a card number, when it finds it, it will delete the card
-//  number and the authorizations attached to it. If no card number is found, nothing gets
+//  number and the authorization attached to it. If no card number is found, nothing gets
 //  deleted.
 //****************************************************************************************
 
